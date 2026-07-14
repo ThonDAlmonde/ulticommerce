@@ -1,0 +1,63 @@
+<?php
+
+defined( 'ABSPATH' ) || exit;
+
+class UltiCommerce_Product_Taxonomies {
+
+    public function __construct() {
+        add_action( 'init', [ $this, 'register_taxonomies' ] );
+    }
+
+    public function register_taxonomies() {
+        $taxonomies = [
+            'product_category' => [
+                'label'        => __( 'Product Categories', 'ulticommerce-core' ),
+                'singular'     => __( 'Product Category', 'ulticommerce-core' ),
+                'hierarchical' => true,
+                'rewrite'      => [ 'slug' => 'product-category' ],
+            ],
+            'product_brand' => [
+                'label'        => __( 'Brands', 'ulticommerce-core' ),
+                'singular'     => __( 'Brand', 'ulticommerce-core' ),
+                'hierarchical' => true,
+                'rewrite'      => [ 'slug' => 'brand' ],
+            ],
+            'product_collection' => [
+                'label'        => __( 'Collections', 'ulticommerce-core' ),
+                'singular'     => __( 'Collection', 'ulticommerce-core' ),
+                'hierarchical' => true,
+                'rewrite'      => [ 'slug' => 'collection' ],
+            ],
+            'product_tag' => [
+                'label'        => __( 'Product Tags', 'ulticommerce-core' ),
+                'singular'     => __( 'Product Tag', 'ulticommerce-core' ),
+                'hierarchical' => false,
+                'rewrite'      => [ 'slug' => 'product-tag' ],
+            ],
+        ];
+
+        foreach ( $taxonomies as $slug => $config ) {
+            register_taxonomy( $slug, 'product', [
+                'labels'        => [
+                    'name'          => $config['label'],
+                    'singular_name' => $config['singular'],
+                    'search_items'  => sprintf( __( 'Search %s', 'ulticommerce-core' ), $config['label'] ),
+                    'all_items'     => sprintf( __( 'All %s', 'ulticommerce-core' ), $config['label'] ),
+                    'edit_item'     => sprintf( __( 'Edit %s', 'ulticommerce-core' ), $config['singular'] ),
+                    'update_item'   => sprintf( __( 'Update %s', 'ulticommerce-core' ), $config['singular'] ),
+                    'add_new_item'  => sprintf( __( 'Add New %s', 'ulticommerce-core' ), $config['singular'] ),
+                    'new_item_name' => sprintf( __( 'New %s Name', 'ulticommerce-core' ), $config['singular'] ),
+                    'menu_name'     => $config['label'],
+                ],
+                'hierarchical'      => $config['hierarchical'],
+                'public'            => true,
+                'show_in_nav_menus' => true,
+                'show_in_rest'      => true,
+                'rewrite'           => $config['rewrite'],
+                'show_admin_column' => true,
+            ] );
+        }
+    }
+}
+
+new UltiCommerce_Product_Taxonomies();
