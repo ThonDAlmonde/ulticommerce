@@ -126,11 +126,12 @@ class UltiCommerce_Product_Import {
         if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorized' );
         check_admin_referer( 'ulti_import_csv', 'ulti_import_nonce' );
 
-        if ( ! isset( $_FILES['csv_file'] ) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK ) {
+        if ( ! isset( $_FILES['csv_file']['error'] ) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK ) {
             wp_die( 'Upload failed. Please try again.' );
         }
 
-        $tmp = $_FILES['csv_file']['tmp_name'];
+        $tmp = sanitize_text_field( wp_unslash( $_FILES['csv_file']['tmp_name'] ?? '' ) );
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
         $handle = fopen( $tmp, 'r' );
         if ( ! $handle ) wp_die( 'Cannot read file.' );
 
@@ -138,7 +139,7 @@ class UltiCommerce_Product_Import {
         if ( ! $header ) wp_die( 'Empty CSV file.' );
 
         $header = array_map( 'strtolower', array_map( 'trim', $header ) );
-        $update_existing = ! empty( $_POST['update_existing'] ) ? intval( $_POST['update_existing'] ) : 0;
+        $update_existing = ! empty( $_POST['update_existing'] ) ? intval( wp_unslash( $_POST['update_existing'] ) ) : 0;
 
         $results = [ 'success' => 0, 'error' => 0, 'skipped' => 0, 'log' => [] ];
 
@@ -177,6 +178,7 @@ class UltiCommerce_Product_Import {
             }
         }
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
         fclose( $handle );
         set_transient( 'ulti_import_results', $results, 60 );
         wp_safe_redirect( admin_url( 'edit.php?post_type=product&page=product-import-csv' ) );
@@ -188,7 +190,9 @@ class UltiCommerce_Product_Import {
         if ( $update_existing && ! empty( $data['sku'] ) ) {
             $existing = get_posts( [
                 'post_type'      => 'product',
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
                 'meta_key'       => '_product_sku',
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
                 'meta_value'     => $data['sku'],
                 'fields'         => 'ids',
                 'posts_per_page' => 1,
@@ -342,7 +346,9 @@ class UltiCommerce_Product_Import {
             $existing = get_posts( [
                 'post_type'      => 'product_variation',
                 'post_parent'    => $product_id,
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
                 'meta_key'       => '_variation_attr_hash',
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
                 'meta_value'     => md5( $attr_string ),
                 'fields'         => 'ids',
                 'posts_per_page' => 1,
@@ -387,7 +393,9 @@ class UltiCommerce_Product_Import {
         header( 'Content-Type: text/csv; charset=utf-8' );
         header( 'Content-Disposition: attachment; filename="ulti-product-import-sample.csv"' );
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
         $out = fopen( 'php://output', 'w' );
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
         fwrite( $out, "\xEF\xBB\xBF" );
 
         $columns = [
@@ -426,6 +434,7 @@ class UltiCommerce_Product_Import {
 
         fputcsv( $out, [ 'Another Product', '', '', '', 'SP-002', '49.99', '', '50', '', '', '', '1', '', '', 'Home|Kitchen', 'BrandB', '', 'featured', '', '' ] );
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
         fclose( $out );
         exit;
     }

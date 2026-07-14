@@ -52,8 +52,8 @@ class UltiCommerce_Product_Attributes {
         wp_add_inline_script( 'ulticommerce-admin', '
 jQuery(function($) {
     var attrIndex = 0;
-    var attrNonce = "' . $attr_nonce . '";
-    var availableAttrs = ' . json_encode( wp_list_pluck( $attributes, 'slug', 'term_id' ) ) . ';
+    var attrNonce = "' . esc_js( $attr_nonce ) . '";
+    var availableAttrs = ' . wp_json_encode( wp_list_pluck( $attributes, 'slug', 'term_id' ) ) . ';
     var $container = $("#product-attribute-rows");
 
     $("#add-attribute-row").on("click", function() {
@@ -108,7 +108,7 @@ jQuery(function($) {
         wp_add_inline_script( 'ulticommerce-admin', '
 jQuery(function($) {
     var attrIndex = ' . count( $product_attrs ) . ';
-    var attrNonce = "' . $attr_nonce . '";
+    var attrNonce = "' . esc_js( $attr_nonce ) . '";
     var $container = $("#product-attribute-rows");
 
     $("#add-attribute-row").on("click", function() {
@@ -158,9 +158,11 @@ jQuery(function($) {
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
         if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
+        // phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['product_attributes'] ) && is_array( $_POST['product_attributes'] ) ) {
             $attrs = [];
-            foreach ( $_POST['product_attributes'] as $data ) {
+            foreach ( wp_unslash( $_POST['product_attributes'] ) as $data ) {
+            // phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $name   = sanitize_text_field( $data['name'] ?? '' );
                 $values = sanitize_text_field( $data['values'] ?? '' );
                 if ( $name ) {
@@ -199,7 +201,7 @@ function ulti_get_attribute_row_cb() {
         wp_die( 'Unauthorized.' );
     }
     check_ajax_referer( 'ulti_edit_attributes', '_ajax_nonce' );
-    $index     = intval( $_GET['index'] );
+    $index     = intval( wp_unslash( $_GET['index'] ?? 0 ) );
     $attributes = get_terms( [ 'taxonomy' => 'product_attribute', 'hide_empty' => false ] );
     ?>
     <div class="attr-row" data-index="<?php echo esc_attr( $index ); ?>">
@@ -223,7 +225,7 @@ function ulti_get_attr_terms_cb() {
         wp_send_json_error();
     }
     check_ajax_referer( 'ulti_edit_attributes', '_ajax_nonce' );
-    $slug = sanitize_text_field( $_GET['attr_slug'] );
+    $slug = sanitize_text_field( wp_unslash( $_GET['attr_slug'] ?? '' ) );
     $terms = get_terms( [ 'taxonomy' => 'product_attribute', 'slug' => $slug, 'hide_empty' => false ] );
     if ( ! empty( $terms ) ) {
         $child_terms = get_terms( [ 'taxonomy' => 'product_attribute', 'parent' => $terms[0]->term_id, 'hide_empty' => false, 'fields' => 'names' ] );

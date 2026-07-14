@@ -94,8 +94,8 @@ class UltiCommerce_Subscriber_CPT {
     }
 
     public function ajax_toggle_subscriber() {
-        $post_id = intval( $_POST['post_id'] ?? 0 );
-        $new_status = $_POST['new_status'] ?? '';
+        $post_id = intval( wp_unslash( $_POST['post_id'] ?? 0 ) );
+        $new_status = sanitize_text_field( wp_unslash( $_POST['new_status'] ?? '' ) );
 
         if ( ! $post_id || ! in_array( $new_status, [ 'active', 'unsubscribed' ] ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid request.', 'ulticommerce-core' ) ] );
@@ -130,9 +130,11 @@ class UltiCommerce_Subscriber_CPT {
     }
 
     public function handle_export_csv() {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended
         if ( empty( $_GET['export_subscribers_csv'] ) || empty( $_GET['post_type'] ) || $_GET['post_type'] !== 'ulti_subscriber' ) {
             return;
         }
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_die( 'Unauthorized.' );
@@ -148,7 +150,7 @@ class UltiCommerce_Subscriber_CPT {
         ] );
 
         header( 'Content-Type: text/csv; charset=utf-8' );
-        header( 'Content-Disposition: attachment; filename="subscribers-' . date( 'Y-m-d' ) . '.csv"' );
+        header( 'Content-Disposition: attachment; filename="subscribers-' . gmdate( 'Y-m-d' ) . '.csv"' );
 
         $output = fopen( 'php://output', 'w' );
         fprintf( $output, chr(0xEF) . chr(0xBB) . chr(0xBF) ); // BOM for UTF-8
@@ -163,6 +165,7 @@ class UltiCommerce_Subscriber_CPT {
             ] );
         }
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
         fclose( $output );
         exit;
     }

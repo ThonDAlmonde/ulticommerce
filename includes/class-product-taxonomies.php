@@ -41,11 +41,17 @@ class UltiCommerce_Product_Taxonomies {
                 'labels'        => [
                     'name'          => $config['label'],
                     'singular_name' => $config['singular'],
+                    /* translators: %s: taxonomy label */
                     'search_items'  => sprintf( __( 'Search %s', 'ulticommerce-core' ), $config['label'] ),
+                    /* translators: %s: taxonomy label */
                     'all_items'     => sprintf( __( 'All %s', 'ulticommerce-core' ), $config['label'] ),
+                    /* translators: %s: taxonomy singular name */
                     'edit_item'     => sprintf( __( 'Edit %s', 'ulticommerce-core' ), $config['singular'] ),
+                    /* translators: %s: taxonomy singular name */
                     'update_item'   => sprintf( __( 'Update %s', 'ulticommerce-core' ), $config['singular'] ),
+                    /* translators: %s: taxonomy singular name */
                     'add_new_item'  => sprintf( __( 'Add New %s', 'ulticommerce-core' ), $config['singular'] ),
+                    /* translators: %s: taxonomy singular name */
                     'new_item_name' => sprintf( __( 'New %s Name', 'ulticommerce-core' ), $config['singular'] ),
                     'menu_name'     => $config['label'],
                 ],

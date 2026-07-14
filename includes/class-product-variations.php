@@ -173,11 +173,12 @@ jQuery(function($) {
     public function ajax_save_variations() {
         check_ajax_referer( 'ulti_save_variations', '_ajax_nonce' );
 
-        $post_id    = intval( $_POST['post_id'] );
-        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+        $post_id    = intval( wp_unslash( $_POST['post_id'] ?? 0 ) );
+        if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
             wp_send_json_error();
         }
-        $variations = json_decode( stripslashes( $_POST['variations'] ), true );
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $variations = json_decode( wp_unslash( $_POST['variations'] ?? '' ), true );
 
         if ( ! $variations || ! is_array( $variations ) ) {
             wp_send_json_error();
@@ -197,7 +198,9 @@ jQuery(function($) {
             $existing = get_posts( [
                 'post_type'      => 'product_variation',
                 'post_parent'    => $post_id,
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
                 'meta_key'       => '_variation_attr_hash',
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
                 'meta_value'     => md5( $attr_string ),
                 'fields'         => 'ids',
                 'posts_per_page' => 1,

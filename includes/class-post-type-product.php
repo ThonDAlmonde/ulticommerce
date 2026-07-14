@@ -87,7 +87,7 @@ class UltiCommerce_Product_CPT {
             $attrs = $field[2] ?? '';
             echo '<tr>';
             echo '<th><label for="' . esc_attr( $key ) . '">' . esc_html( $field[0] ) . '</label></th>';
-            echo '<td><input type="' . esc_attr( $field[1] ) . '" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $value ) . '" class="regular-text" ' . $attrs . '></td>';
+            echo '<td><input type="' . esc_attr( $field[1] ) . '" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" value="' . esc_attr( $value ) . '" class="regular-text" ' . wp_kses_post( $attrs ) . '></td>';
             echo '</tr>';
         }
         echo '</table>';
@@ -173,7 +173,7 @@ jQuery(function($) {
 
         foreach ( $fields as $key ) {
             if ( isset( $_POST[ $key ] ) ) {
-                update_post_meta( $post_id, $key, sanitize_text_field( $_POST[ $key ] ) );
+                update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
             }
         }
 
@@ -204,7 +204,7 @@ function ulti_get_attachment_thumb_cb() {
         wp_die( 'Unauthorized.' );
     }
     check_ajax_referer( 'ulti_get_attachment_thumb', '_ajax_nonce' );
-    $id = intval( $_POST['attachment_id'] );
+    $id = intval( wp_unslash( $_POST['attachment_id'] ?? 0 ) );
     echo wp_get_attachment_image( $id, 'thumbnail' );
     wp_die();
 }

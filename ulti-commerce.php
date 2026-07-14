@@ -5,6 +5,8 @@
  * Description: Core e-commerce plugin for UltiCommerce. Products, orders, cart, checkout, shipping, and coupons.
  * Version:     1.0.0
  * Author:      UltiCommerce
+ * License:     GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: ulticommerce-core
  * Domain Path: /languages
  */
@@ -15,9 +17,9 @@ define( 'ULTI_COMMERCE_VERSION', '1.0.0' );
 define( 'ULTI_COMMERCE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'ULTI_COMMERCE_URL', plugin_dir_url( __FILE__ ) );
 
-$vendor_autoload = ULTI_COMMERCE_PATH . 'vendor/autoload.php';
-if ( file_exists( $vendor_autoload ) ) {
-    require $vendor_autoload;
+$ulti_vendor_autoload = ULTI_COMMERCE_PATH . 'vendor/autoload.php';
+if ( file_exists( $ulti_vendor_autoload ) ) {
+    require $ulti_vendor_autoload;
 }
 
 require_once ULTI_COMMERCE_PATH . 'includes/class-post-type-product.php';

@@ -1,6 +1,6 @@
 === UltiCommerce Core ===
 Contributors: thondalmonde
-Tags: e-commerce, products, orders, payments, cart, checkout, shipping, coupons
+Tags: e-commerce, products, orders, payment, cart
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.0

@@ -165,10 +165,15 @@ jQuery(function($) {
     }
 
     public function ajax_update_status() {
-        $post_id = intval( $_POST['post_id'] );
-        $status  = sanitize_text_field( $_POST['status'] );
+        $post_id = intval( wp_unslash( $_POST['post_id'] ?? 0 ) );
 
         check_ajax_referer( 'ulti_update_status_' . $post_id, '_ajax_nonce' );
+
+        $status  = sanitize_text_field( wp_unslash( $_POST['status'] ?? '' ) );
+
+        if ( ! $post_id ) {
+            wp_send_json_error( [ 'message' => 'Invalid request.' ] );
+        }
 
         if ( ! current_user_can( 'edit_post', $post_id ) ) {
             wp_send_json_error( [ 'message' => 'Unauthorized.' ] );
@@ -178,7 +183,8 @@ jQuery(function($) {
 
         if ( ! self::can_transition( $old_status, $status ) ) {
             wp_send_json_error( [ 'message' => sprintf(
-                esc_html__( 'Cannot change from "%s" to "%s".', 'ulticommerce-core' ),
+                /* translators: %1$s: old status label, %2$s: new status label */
+                esc_html__( 'Cannot change from "%1$s" to "%2$s".', 'ulticommerce-core' ),
                 esc_html( self::get_label( $old_status ) ),
                 esc_html( self::get_label( $status ) )
             ) ] );

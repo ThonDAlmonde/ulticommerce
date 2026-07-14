@@ -13,14 +13,15 @@ class UltiCommerce_Login_Widget extends WP_Widget {
     }
 
     public function widget( $args, $instance ) {
-        echo $args['before_widget'];
+        echo wp_kses_post( $args['before_widget'] );
 
         if ( ! empty( $instance['title'] ) ) {
-            echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
+            echo wp_kses_post( $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'] );
         }
 
         if ( is_user_logged_in() ) {
             $current_user = wp_get_current_user();
+            /* translators: %s: user display name */
             echo '<p>' . esc_html( sprintf( __( 'Hello, %s!', 'ulticommerce-core' ), $current_user->display_name ) ) . '</p>';
             echo '<a href="' . esc_url( wp_logout_url( home_url() ) ) . '">' . esc_html__( 'Log out', 'ulticommerce-core' ) . '</a>';
         } else {
@@ -28,7 +29,7 @@ class UltiCommerce_Login_Widget extends WP_Widget {
             $this->render_login_form();
         }
 
-        echo $args['after_widget'];
+        echo wp_kses_post( $args['after_widget'] );
     }
 
     private function render_sso_buttons() {

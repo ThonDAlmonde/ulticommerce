@@ -38,6 +38,7 @@ class UltiCommerce_Order_CPT {
             'post_type'      => 'order',
             'post_status'    => 'publish',
             'posts_per_page' => 50,
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             'meta_query'     => [
                 [
                     'key'   => '_order_status',
@@ -47,7 +48,7 @@ class UltiCommerce_Order_CPT {
             'date_query' => [
                 [
                     'column'    => 'post_date',
-                    'before'    => date( 'Y-m-d H:i:s', strtotime( '-1 hour' ) ),
+                    'before'    => gmdate( 'Y-m-d H:i:s', strtotime( '-1 hour' ) ),
                     'inclusive' => true,
                 ],
             ],
@@ -156,7 +157,7 @@ class UltiCommerce_Order_CPT {
                     <?php foreach ( UltiCommerce_Order_Statuses::get_statuses() as $slug => $lbl ) :
                         $option_disabled = $slug !== $status && ! in_array( $slug, $allowed, true ) ? 'disabled' : '';
                     ?>
-                        <option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $status, $slug ); ?> <?php echo $option_disabled; ?>><?php echo esc_html( $lbl ); ?></option>
+                        <option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $status, $slug ); ?> <?php echo esc_attr( $option_disabled ); ?>><?php echo esc_html( $lbl ); ?></option>
                     <?php endforeach; ?>
                 </select>
                 <?php endif; ?>
@@ -187,8 +188,11 @@ class UltiCommerce_Order_CPT {
 
     public function admin_filters( $post_type ) {
         if ( $post_type !== 'order' ) return;
-        $status = isset( $_GET['order_status_filter'] ) ? sanitize_text_field( $_GET['order_status_filter'] ) : '';
-        $date   = isset( $_GET['order_date_filter'] ) ? sanitize_text_field( $_GET['order_date_filter'] ) : '';
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended
+        $status = isset( $_GET['order_status_filter'] ) ? sanitize_text_field( wp_unslash( $_GET['order_status_filter'] ) ) : '';
+        $date   = isset( $_GET['order_date_filter'] ) ? sanitize_text_field( wp_unslash( $_GET['order_date_filter'] ) ) : '';
+        $search = sanitize_text_field( wp_unslash( $_GET['order_number_search'] ?? '' ) );
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         ?>
         <select name="order_status_filter">
             <option value=""><?php esc_html_e( 'All statuses', 'ulticommerce-core' ); ?></option>
@@ -204,7 +208,7 @@ class UltiCommerce_Order_CPT {
             <option value="last_month" <?php selected( $date, 'last_month' ); ?>><?php esc_html_e( 'Last month', 'ulticommerce-core' ); ?></option>
             <option value="this_year" <?php selected( $date, 'this_year' ); ?>><?php esc_html_e( 'This year', 'ulticommerce-core' ); ?></option>
         </select>
-        <input type="text" name="order_number_search" placeholder="<?php esc_attr_e( 'Search order #', 'ulticommerce-core' ); ?>" value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_GET['order_number_search'] ?? '' ) ) ); ?>" style="width:140px;">
+        <input type="text" name="order_number_search" placeholder="<?php esc_attr_e( 'Search order #', 'ulticommerce-core' ); ?>" value="<?php echo esc_attr( $search ); ?>" style="width:140px;">
         <?php
     }
 
@@ -213,6 +217,7 @@ class UltiCommerce_Order_CPT {
         if ( ! is_admin() || $pagenow !== 'edit.php' || $query->get( 'post_type' ) !== 'order' ) return;
         if ( ! $query->is_main_query() ) return;
 
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended
         $meta_query = [];
 
         $status = sanitize_text_field( wp_unslash( $_GET['order_status_filter'] ?? '' ) );
@@ -226,23 +231,24 @@ class UltiCommerce_Order_CPT {
         }
 
         $date_filter = sanitize_text_field( wp_unslash( $_GET['order_date_filter'] ?? '' ) );
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         if ( ! empty( $date_filter ) ) {
             $date_query = [];
             switch ( $date_filter ) {
                 case 'today':
-                    $date_query = [ 'after' => date( 'Y-m-d 00:00:00' ), 'inclusive' => true ];
+                    $date_query = [ 'after' => gmdate( 'Y-m-d 00:00:00' ), 'inclusive' => true ];
                     break;
                 case 'this_week':
-                    $date_query = [ 'after' => date( 'Y-m-d', strtotime( 'last monday' ) ), 'inclusive' => true ];
+                    $date_query = [ 'after' => gmdate( 'Y-m-d', strtotime( 'last monday' ) ), 'inclusive' => true ];
                     break;
                 case 'this_month':
-                    $date_query = [ 'after' => date( 'Y-m-01' ), 'inclusive' => true ];
+                    $date_query = [ 'after' => gmdate( 'Y-m-01' ), 'inclusive' => true ];
                     break;
                 case 'last_month':
-                    $date_query = [ 'after' => date( 'Y-m-01', strtotime( 'first day of last month' ) ), 'before' => date( 'Y-m-t', strtotime( 'last day of last month' ) ), 'inclusive' => true ];
+                    $date_query = [ 'after' => gmdate( 'Y-m-01', strtotime( 'first day of last month' ) ), 'before' => gmdate( 'Y-m-t', strtotime( 'last day of last month' ) ), 'inclusive' => true ];
                     break;
                 case 'this_year':
-                    $date_query = [ 'after' => date( 'Y-01-01' ), 'inclusive' => true ];
+                    $date_query = [ 'after' => gmdate( 'Y-01-01' ), 'inclusive' => true ];
                     break;
             }
             if ( ! empty( $date_query ) ) {
@@ -384,6 +390,7 @@ jQuery(function($) {
     }
 
     public function render_delivery_box( $post ) {
+        wp_nonce_field( 'ulti_save_order_meta', '_ulti_order_nonce' );
         $tracking = get_post_meta( $post->ID, '_order_tracking_number', true );
         $courier  = get_post_meta( $post->ID, '_order_courier_name', true );
         $weight   = get_post_meta( $post->ID, '_order_packing_weight', true );
@@ -427,11 +434,14 @@ jQuery(function($) {
 
     public function save_order_meta( $post_id ) {
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+        if ( ! isset( $_POST['_ulti_order_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ulti_order_nonce'] ) ), 'ulti_save_order_meta' ) ) {
+            return;
+        }
         if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
         if ( isset( $_POST['_order_status'] ) ) {
             $old = get_post_meta( $post_id, '_order_status', true ) ?: 'new';
-            $new = sanitize_text_field( $_POST['_order_status'] );
+            $new = sanitize_text_field( wp_unslash( $_POST['_order_status'] ) );
 
             if ( $old !== $new ) {
                 if ( ! UltiCommerce_Order_Statuses::can_transition( $old, $new ) ) {
@@ -455,14 +465,14 @@ jQuery(function($) {
         ];
         foreach ( $tracking as $key ) {
             if ( isset( $_POST[ $key ] ) ) {
-                update_post_meta( $post_id, $key, sanitize_text_field( $_POST[ $key ] ) );
+                update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
             }
         }
 
         $old_tracking = get_post_meta( $post_id, '_order_tracking_number', true );
-        $new_tracking = sanitize_text_field( $_POST['_order_tracking_number'] ?? '' );
+        $new_tracking = sanitize_text_field( wp_unslash( $_POST['_order_tracking_number'] ?? '' ) );
         $old_courier  = get_post_meta( $post_id, '_order_courier_name', true );
-        $new_courier  = sanitize_text_field( $_POST['_order_courier_name'] ?? '' );
+        $new_courier  = sanitize_text_field( wp_unslash( $_POST['_order_courier_name'] ?? '' ) );
         if ( $new_tracking && $new_tracking !== $old_tracking ) {
             do_action( 'ulti_order_tracking_updated', $post_id, $new_tracking, $new_courier );
         }
@@ -481,6 +491,7 @@ jQuery(function($) {
 
     public function bulk_status_actions( $actions ) {
         foreach ( UltiCommerce_Order_Statuses::get_statuses() as $slug => $label ) {
+            /* translators: %s: order status label */
             $actions[ 'set_status_' . $slug ] = sprintf( esc_html__( 'Set status to %s', 'ulticommerce-core' ), esc_html( $label ) );
         }
         return $actions;
@@ -514,12 +525,15 @@ jQuery(function($) {
     public function bulk_action_admin_notice() {
         $screen = get_current_screen();
         if ( ! $screen || $screen->id !== 'edit-order' ) return;
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended
         if ( ! empty( $_GET['bulk_processed'] ) ) {
-            $processed = intval( $_GET['bulk_processed'] );
-            $skipped   = intval( $_GET['bulk_skipped'] ?? 0 );
+            $processed = intval( wp_unslash( $_GET['bulk_processed'] ) );
+            $skipped   = intval( wp_unslash( $_GET['bulk_skipped'] ?? 0 ) );
             echo '<div class="notice notice-success is-dismissible"><p>' .
-                sprintf( esc_html__( 'Updated %d order(s).', 'ulticommerce-core' ), $processed ) .
-                ( $skipped ? ' ' . sprintf( esc_html__( '%d skipped (invalid transition).', 'ulticommerce-core' ), $skipped ) : '' ) .
+                /* translators: %d: number of orders updated */
+                esc_html( sprintf( __( 'Updated %d order(s).', 'ulticommerce-core' ), $processed ) ) .
+                ( $skipped ? ' ' . /* translators: %d: number of orders skipped */ esc_html( sprintf( __( '%d skipped (invalid transition).', 'ulticommerce-core' ), $skipped ) ) : '' ) .
+                // phpcs:enable WordPress.Security.NonceVerification.Recommended
                 '</p></div>';
         }
     }
@@ -528,7 +542,7 @@ jQuery(function($) {
         check_ajax_referer( 'ulti_bulk_status' );
         if ( ! current_user_can( 'edit_others_posts' ) ) wp_send_json_error();
         $post_ids = array_map( 'intval', (array) wp_unslash( $_POST['post_ids'] ?? [] ) );
-        $status   = sanitize_text_field( $_POST['status'] ?? '' );
+        $status   = sanitize_text_field( wp_unslash( $_POST['status'] ?? '' ) );
         $skipped  = 0;
         $invalid  = 0;
         foreach ( $post_ids as $pid ) {
@@ -549,8 +563,8 @@ jQuery(function($) {
     }
 
     public function ajax_add_note() {
-        $post_id = intval( $_POST['post_id'] ?? 0 );
-        $text    = sanitize_textarea_field( $_POST['text'] ?? '' );
+        $post_id = intval( wp_unslash( $_POST['post_id'] ?? 0 ) );
+        $text    = sanitize_textarea_field( wp_unslash( $_POST['text'] ?? '' ) );
         if ( ! $post_id || ! $text ) wp_send_json_error();
         check_ajax_referer( 'add_order_note_' . $post_id, '_ajax_nonce' );
         if ( ! current_user_can( 'edit_post', $post_id ) ) wp_send_json_error();
@@ -567,8 +581,10 @@ jQuery(function($) {
     }
 
     public function handle_print_invoice() {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended
         if ( ! isset( $_GET['print-invoice'] ) ) return;
         $post_id = intval( $_GET['post'] ?? ( get_query_var( 'view-order' ) ?: 0 ) );
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         if ( ! $post_id || get_post_type( $post_id ) !== 'order' ) return;
         $order_customer_id = (int) get_post_meta( $post_id, '_order_customer_id', true );
         if ( $order_customer_id && $order_customer_id !== get_current_user_id() && ! current_user_can( 'edit_post', $post_id ) ) {
@@ -599,7 +615,13 @@ jQuery(function($) {
         header( 'Content-Type: application/pdf' );
         header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
         header( 'Content-Length: ' . filesize( $file ) );
-        readfile( $file );
+        WP_Filesystem();
+        global $wp_filesystem;
+        if ( $wp_filesystem ) {
+            echo $wp_filesystem->get_contents( $file ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        } else {
+            readfile( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+        }
         exit;
     }
 
@@ -654,7 +676,7 @@ jQuery(function($) {
         ob_start();
         ?>
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title><?php printf( esc_html__( 'Invoice #%s', 'ulticommerce-core' ), esc_html( $order_num ) ); ?></title>
+<html><head><meta charset="utf-8"><title><?php /* translators: %s: order number */ printf( esc_html__( 'Invoice #%s', 'ulticommerce-core' ), esc_html( $order_num ) ); ?></title>
 <style>
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #333; margin: 40px; }
 .invoice { max-width: 700px; margin: 0 auto; }
@@ -674,8 +696,8 @@ td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
 <div class="header">
 <div><h1><?php esc_html_e( 'INVOICE', 'ulticommerce-core' ); ?></h1></div>
 <div class="meta">
-<div><strong><?php printf( esc_html__( 'Order #%s', 'ulticommerce-core' ), esc_html( $order_num ) ); ?></strong></div>
-<div><?php echo esc_html( $date ? date( 'M j, Y', strtotime( $date ) ) : '' ); ?></div>
+<div><strong><?php /* translators: %s: order number */ printf( esc_html__( 'Order #%s', 'ulticommerce-core' ), esc_html( $order_num ) ); ?></strong></div>
+<div><?php echo esc_html( $date ? gmdate( 'M j, Y', strtotime( $date ) ) : '' ); ?></div>
 </div></div>
 
 <div class="address">
