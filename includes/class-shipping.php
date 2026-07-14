@@ -133,59 +133,39 @@ class UltiCommerce_Shipping {
 
     public function admin_scripts( $hook ) {
         if ( $hook !== 'products_page_ulti-shipping' ) return;
-        ?>
-        <style>
-        .ulti-shipping-wrap { max-width: 1200px; }
-        .ulti-ship-section { background:#fff; border:1px solid #c3c4c7; border-radius:4px; padding:16px; margin-bottom:16px; }
-        .ulti-ship-section h2 { margin:0 0 12px; font-size:16px; }
-        .ulti-field-row { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
-        .ulti-field-row > * { flex:1; min-width:120px; }
-        .ulti-field-row label { display:block; font-size:12px; font-weight:600; margin-bottom:2px; }
-        .ulti-field-row input, .ulti-field-row select { width:100%; }
-        .rates-table-wrap { overflow-x:auto; }
-        .rates-table { width:100%; border-collapse:collapse; font-size:13px; }
-        .rates-table th { background:#f0f0f1; padding:8px; text-align:left; font-size:12px; font-weight:600; }
-        .rates-table td { padding:6px 8px; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
-        .rates-table td input, .rates-table td select { width:100%; box-sizing:border-box; }
-        .rates-table .remove-row { color:#a00; cursor:pointer; text-align:center; }
-        .rates-table .fee-input { width:90px; }
-        .rates-table .weight-input { width:80px; }
-        .import-section { padding:12px; background:#f6f7f7; border:1px dashed #c3c4c7; border-radius:4px; margin-top:12px; }
-        .tag { display:inline-block; background:#f0f0f1; padding:2px 8px; border-radius:3px; font-size:12px; margin:2px; }
-        .tag .remove { margin-left:4px; cursor:pointer; color:#a00; }
-        </style>
-        <script>
-        jQuery(function($) {
-            var rowIdx = 1000;
-            $(document).on('click', '.add-rate-row', function() {
-                var tpl = $('#rate-row-template').html().replace(/__ROWIDX__/g, rowIdx++);
-                $('#rates-table-body').append(tpl);
-            });
-            $(document).on('click', '.remove-row', function() {
-                $(this).closest('tr').remove();
-            });
-            $(document).on('change', '#cb-cross-border', function() {
-                $('.cross-border-fields').toggle(this.checked);
-            });
-            $(document).on('change', '#country-multiselect', function() {
-                var vals = $(this).val() || [];
-                var tags = $('#country-tags');
-                tags.empty();
-                vals.forEach(function(v) {
-                    var label = $(this).find('option[value="' + v + '"]').text();
-                    tags.append('<span class="tag">' + label + ' <span class="remove" data-val="' + v + '">&times;</span></span>');
-                }.bind(this));
-                $('#supported-countries-input').val(vals.join(','));
-            });
-            $(document).on('click', '#country-tags .remove', function() {
-                var val = $(this).data('val');
-                var select = $('#country-multiselect');
-                var current = select.val() || [];
-                select.val(current.filter(function(v) { return v !== val; })).trigger('change');
-            });
-        });
-        </script>
-        <?php
+        wp_enqueue_style( 'ulticommerce-admin', plugin_dir_url( __DIR__ ) . 'assets/admin.css', [], '1.0.0' );
+        wp_enqueue_script( 'ulticommerce-admin', plugin_dir_url( __DIR__ ) . 'assets/admin.js', [ 'jquery' ], '1.0.0', true );
+        wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    var rowIdx = 1000;
+    $(document).on("click", ".add-rate-row", function() {
+        var tpl = $("#rate-row-template").html().replace(/__ROWIDX__/g, rowIdx++);
+        $("#rates-table-body").append(tpl);
+    });
+    $(document).on("click", ".remove-row", function() {
+        $(this).closest("tr").remove();
+    });
+    $(document).on("change", "#cb-cross-border", function() {
+        $(".cross-border-fields").toggle(this.checked);
+    });
+    $(document).on("change", "#country-multiselect", function() {
+        var vals = $(this).val() || [];
+        var tags = $("#country-tags");
+        tags.empty();
+        vals.forEach(function(v) {
+            var label = $(this).find("option[value=\"" + v + "\"]").text();
+            tags.append("<span class=\"tag\">" + label + " <span class=\"remove\" data-val=\"" + v + "\">&times;</span></span>");
+        }.bind(this));
+        $("#supported-countries-input").val(vals.join(","));
+    });
+    $(document).on("click", "#country-tags .remove", function() {
+        var val = $(this).data("val");
+        var select = $("#country-multiselect");
+        var current = select.val() || [];
+        select.val(current.filter(function(v) { return v !== val; })).trigger("change");
+    });
+});
+' );
     }
 
     public function render_page() {
@@ -338,7 +318,7 @@ class UltiCommerce_Shipping {
             </div>
         </div>
 
-        <script type="text/html" id="rate-row-template">
+        <template id="rate-row-template">
             <tr>
                 <td><input type="text" name="ulti_shipping_rates[__ROWIDX__][provider]" value="" placeholder="e.g. Kerry"></td>
                 <td><input type="text" name="ulti_shipping_rates[__ROWIDX__][service]" value="" placeholder="e.g. Standard"></td>
@@ -356,7 +336,7 @@ class UltiCommerce_Shipping {
                 <td><input type="number" name="ulti_shipping_rates[__ROWIDX__][fee]" value="" step="0.01" min="0" class="fee-input"></td>
                 <td><span class="remove-row"><?php esc_html_e( 'Remove', 'ulticommerce-core' ); ?></span></td>
             </tr>
-        </script>
+        </template>
         <?php
     }
 

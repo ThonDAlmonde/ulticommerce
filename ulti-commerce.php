@@ -45,6 +45,12 @@ function ulti_commerce_init() {
     }
 }
 
+add_action( 'admin_enqueue_scripts', 'ulti_commerce_admin_assets' );
+function ulti_commerce_admin_assets() {
+    wp_register_style( 'ulticommerce-admin', ULTI_COMMERCE_URL . 'assets/admin.css', [], ULTI_COMMERCE_VERSION );
+    wp_register_script( 'ulticommerce-admin', ULTI_COMMERCE_URL . 'assets/admin.js', [ 'jquery' ], ULTI_COMMERCE_VERSION, true );
+}
+
 add_action( 'widgets_init', 'ulti_register_login_widget' );
 function ulti_register_login_widget() {
     require_once ULTI_COMMERCE_PATH . 'widgets/class-login-widget.php';

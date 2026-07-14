@@ -261,52 +261,53 @@ class UltiCommerce_Product_Settings {
             </form>
         </div>
 
-        <script>
-        jQuery(function($) {
-            var symbols = <?php echo json_encode( [ 'USD' => '$', 'THB' => '฿', 'CNY' => '¥', 'EUR' => '€', 'GBP' => '£', 'RUB' => '₽', 'INR' => '₹', 'JPY' => '¥' ] ); ?>;
-
-            function formatPrice(amount, currency, format, thousand, decimal) {
-                var symbol = symbols[currency] || '$';
-                var parts = parseFloat(amount).toFixed(2).split('.');
-                var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousand === ' ' ? ' ' : (thousand || ','));
-                var price = intPart + (decimal || '.') + parts[1];
-                switch (format) {
-                    case 'symbol_after': return price + symbol;
-                    case 'code_before':  return currency + price;
-                    case 'code_after':   return price + currency;
-                    default:             return symbol + price;
-                }
-            }
-
-            function updatePreview() {
-                var format = $('#ulti_currency_display').val();
-                var currency = $('#ulti_default_currency').val();
-                var thousand = $('#ulti_thousand_sep').val() || ',';
-                var decimal = $('#ulti_decimal_sep').val() || '.';
-                var amount = 1234567.89;
-
-                $('#preview-amount').text(formatPrice(amount, currency, format, thousand, decimal));
-
-                $('.currency-example').each(function() {
-                    var $el = $(this);
-                    var ccy = $el.data('currency');
-                    var amt = $el.data('amount');
-                    $el.text(formatPrice(amt, ccy, format, thousand, decimal));
-                });
-            }
-
-            $('#ulti_separator_preset').on('change', function() {
-                var opt = $(this).find(':selected');
-                $('#ulti_thousand_sep').val(opt.data('thousand'));
-                $('#ulti_decimal_sep').val(opt.data('decimal'));
-                updatePreview();
-            });
-
-            $('#ulti_currency_display, #ulti_default_currency, #ulti_thousand_sep, #ulti_decimal_sep').on('change keyup', updatePreview);
-            updatePreview();
-        });
-        </script>
         <?php
+        wp_enqueue_script( 'ulticommerce-admin' );
+        wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    var symbols = ' . json_encode( [ 'USD' => '$', 'THB' => '฿', 'CNY' => '¥', 'EUR' => '€', 'GBP' => '£', 'RUB' => '₽', 'INR' => '₹', 'JPY' => '¥' ] ) . ';
+
+    function formatPrice(amount, currency, format, thousand, decimal) {
+        var symbol = symbols[currency] || "$";
+        var parts = parseFloat(amount).toFixed(2).split(".");
+        var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousand === " " ? " " : (thousand || ","));
+        var price = intPart + (decimal || ".") + parts[1];
+        switch (format) {
+            case "symbol_after": return price + symbol;
+            case "code_before":  return currency + price;
+            case "code_after":   return price + currency;
+            default:             return symbol + price;
+        }
+    }
+
+    function updatePreview() {
+        var format = $("#ulti_currency_display").val();
+        var currency = $("#ulti_default_currency").val();
+        var thousand = $("#ulti_thousand_sep").val() || ",";
+        var decimal = $("#ulti_decimal_sep").val() || ".";
+        var amount = 1234567.89;
+
+        $("#preview-amount").text(formatPrice(amount, currency, format, thousand, decimal));
+
+        $(".currency-example").each(function() {
+            var $el = $(this);
+            var ccy = $el.data("currency");
+            var amt = $el.data("amount");
+            $el.text(formatPrice(amt, ccy, format, thousand, decimal));
+        });
+    }
+
+    $("#ulti_separator_preset").on("change", function() {
+        var opt = $(this).find(":selected");
+        $("#ulti_thousand_sep").val(opt.data("thousand"));
+        $("#ulti_decimal_sep").val(opt.data("decimal"));
+        updatePreview();
+    });
+
+    $("#ulti_currency_display, #ulti_default_currency, #ulti_thousand_sep, #ulti_decimal_sep").on("change keyup", updatePreview);
+    updatePreview();
+});
+' );
     }
 }
 

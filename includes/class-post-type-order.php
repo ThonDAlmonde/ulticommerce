@@ -363,22 +363,23 @@ class UltiCommerce_Order_CPT {
             <button type="button" class="button" id="add-order-note" style="margin-top:4px;" data-post-id="<?php echo esc_attr( $post->ID ); ?>"><?php esc_html_e( 'Add Note', 'ulticommerce-core' ); ?></button>
             <span class="spinner" style="float:none;margin-top:4px;"></span>
         </div>
-        <script>
-        jQuery(function($) {
-            $('#add-order-note').on('click', function() {
-                var btn = $(this);
-                var text = $('#order-note-input').val();
-                if (!text.trim()) return;
-                var spinner = btn.siblings('.spinner');
-                spinner.addClass('is-active');
-                $.post(ajaxurl, { action: 'ulti_add_order_note', post_id: btn.data('post-id'), text: text }, function(resp) {
-                    spinner.removeClass('is-active');
-                    if (resp.success) { location.reload(); }
-                });
-            });
-        });
-        </script>
         <?php
+        wp_enqueue_script( 'ulticommerce-admin' );
+        wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    $("#add-order-note").on("click", function() {
+        var btn = $(this);
+        var text = $("#order-note-input").val();
+        if (!text.trim()) return;
+        var spinner = btn.siblings(".spinner");
+        spinner.addClass("is-active");
+        $.post(ajaxurl, { action: "ulti_add_order_note", post_id: btn.data("post-id"), text: text }, function(resp) {
+            spinner.removeClass("is-active");
+            if (resp.success) { location.reload(); }
+        });
+    });
+});
+' );
     }
 
     public function render_delivery_box( $post ) {
@@ -715,77 +716,56 @@ td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
     public function admin_scripts( $hook ) {
         $screen = get_current_screen();
         if ( ! $screen || $screen->post_type !== 'order' ) return;
-        ?>
-        <style>
-        .post-type-order .uti-badge {
-            display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;
-        }
-        .post-type-order .uti-badge.badge-primary { background:#0052cc;color:#fff; }
-        .post-type-order .uti-badge.badge-success { background:#0f973d;color:#fff; }
-        .post-type-order .uti-badge.badge-warning { background:#f59e0b;color:#fff; }
-        .post-type-order .uti-badge.badge-error { background:#dc2626;color:#fff; }
-        .post-type-order .uti-badge:empty { background:#6b7280;color:#fff;content:"—"; }
-        .post-type-order .uti-badge.status-final { opacity:0.7; }
-        .post-type-order .uti-status-box select { margin-bottom:4px; }
-        .post-type-order .fixed .column-total { width:80px; }
-        .post-type-order .fixed .column-shipping { width:100px; }
-        .post-type-order .fixed .column-status { width:120px; }
-        </style>
-        <?php
+        wp_enqueue_style( 'ulticommerce-admin' );
+        wp_enqueue_script( 'ulticommerce-admin' );
 
         if ( $screen->base === 'edit' ) {
-            $this->inline_list_js();
-        }
-    }
+            wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    $(".order-status-badge.status-editable").on("click", function() {
+        var badge = $(this);
+        var postId = badge.data("post-id");
+        var dropdown = $(".order-status-dropdown[data-post-id=\"" + postId + "\"]");
+        badge.hide();
+        dropdown.show().focus();
+    });
 
-    private function inline_list_js() {
-        ?>
-        <script>
-        jQuery(function($) {
-            $('.order-status-badge.status-editable').on('click', function() {
-                var badge = $(this);
-                var postId = badge.data('post-id');
-                var dropdown = $('.order-status-dropdown[data-post-id="' + postId + '"]');
-                badge.hide();
-                dropdown.show().focus();
-            });
+    $(".order-status-dropdown").on("change", function() {
+        var dropdown = $(this);
+        var postId = dropdown.data("post-id");
+        var status = dropdown.val();
+        var nonce = dropdown.data("nonce");
+        var badge = $(".order-status-badge[data-post-id=\"" + postId + "\"]");
 
-            $('.order-status-dropdown').on('change', function() {
-                var dropdown = $(this);
-                var postId = dropdown.data('post-id');
-                var status = dropdown.val();
-                var nonce = dropdown.data('nonce');
-                var badge = $('.order-status-badge[data-post-id="' + postId + '"]');
-
-                $.post(ajaxurl, {
-                    action: 'ulti_update_order_status',
-                    post_id: postId,
-                    status: status,
-                    _ajax_nonce: nonce
-                }, function(resp) {
-                    if (resp.success) {
-                        location.reload();
-                    } else {
-                        alert(resp.data && resp.data.message ? resp.data.message : 'Error updating status.');
-                        location.reload();
-                    }
-                });
-            });
-
-            $('.order-status-dropdown').on('blur', function() {
-                var dropdown = $(this);
-                if (!dropdown.data('changed')) {
-                    var postId = dropdown.data('post-id');
-                    var badge = $('.order-status-badge[data-post-id="' + postId + '"]');
-                    dropdown.hide();
-                    badge.show();
-                }
-            }).on('focus', function() {
-                $(this).removeData('changed');
-            });
+        $.post(ajaxurl, {
+            action: "ulti_update_order_status",
+            post_id: postId,
+            status: status,
+            _ajax_nonce: nonce
+        }, function(resp) {
+            if (resp.success) {
+                location.reload();
+            } else {
+                alert(resp.data && resp.data.message ? resp.data.message : "Error updating status.");
+                location.reload();
+            }
         });
-        </script>
-        <?php
+    });
+
+    $(".order-status-dropdown").on("blur", function() {
+        var dropdown = $(this);
+        if (!dropdown.data("changed")) {
+            var postId = dropdown.data("post-id");
+            var badge = $(".order-status-badge[data-post-id=\"" + postId + "\"]");
+            dropdown.hide();
+            badge.show();
+        }
+    }).on("focus", function() {
+        $(this).removeData("changed");
+    });
+});
+' );
+        }
     }
 }
 

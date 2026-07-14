@@ -160,46 +160,39 @@ class UltiCommerce_Subscriber_CPT {
     public function admin_scripts( $hook ) {
         $screen = get_current_screen();
         if ( ! $screen || $screen->post_type !== 'ulti_subscriber' ) return;
-        ?>
-        <style>
-        .post-type-ulti_subscriber .uti-badge {
-            display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;
-        }
-        .post-type-ulti_subscriber .uti-badge.badge-success { background:#0f973d;color:#fff; }
-        .post-type-ulti_subscriber .uti-badge.badge-error { background:#dc2626;color:#fff; }
-        </style>
-        <script>
-        jQuery(function($) {
-            $('.subscriber-toggle').on('click', function(e) {
-                e.preventDefault();
-                var link = $(this);
-                var postId = link.data('post-id');
-                var nonce = link.data('nonce');
-                var action = link.data('action');
-                var newStatus = action === 'unsubscribe' ? 'unsubscribed' : 'active';
+        wp_enqueue_style( 'ulticommerce-admin' );
+        wp_enqueue_script( 'ulticommerce-admin' );
+        wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    $(".subscriber-toggle").on("click", function(e) {
+        e.preventDefault();
+        var link = $(this);
+        var postId = link.data("post-id");
+        var nonce = link.data("nonce");
+        var action = link.data("action");
+        var newStatus = action === "unsubscribe" ? "unsubscribed" : "active";
 
-                $.post(ajaxurl, {
-                    action: 'ulti_toggle_subscriber',
-                    post_id: postId,
-                    new_status: newStatus,
-                    _ajax_nonce: nonce
-                }, function(resp) {
-                    if (resp.success) {
-                        var badge = $('.subscriber-status-badge[data-post-id="' + postId + '"]');
-                        badge.text(resp.data.label);
-                        badge.removeClass('badge-success badge-error').addClass(resp.data.badge_class);
+        $.post(ajaxurl, {
+            action: "ulti_toggle_subscriber",
+            post_id: postId,
+            new_status: newStatus,
+            _ajax_nonce: nonce
+        }, function(resp) {
+            if (resp.success) {
+                var badge = $(".subscriber-status-badge[data-post-id=\"" + postId + "\"]");
+                badge.text(resp.data.label);
+                badge.removeClass("badge-success badge-error").addClass(resp.data.badge_class);
 
-                        var newAction = resp.data.new_status === 'active' ? 'unsubscribe' : 'resubscribe';
-                        var newLabel = resp.data.new_status === 'active' ? '<?php echo esc_js( __( 'Unsubscribe', 'ulticommerce-core' ) ); ?>' : '<?php echo esc_js( __( 'Resubscribe', 'ulticommerce-core' ) ); ?>';
+                var newAction = resp.data.new_status === "active" ? "unsubscribe" : "resubscribe";
+                var newLabel = resp.data.new_status === "active" ? "' . esc_js( __( 'Unsubscribe', 'ulticommerce-core' ) ) . '" : "' . esc_js( __( 'Resubscribe', 'ulticommerce-core' ) ) . '";
 
-                        link.text(newLabel);
-                        link.data('action', newAction);
-                    }
-                });
-            });
+                link.text(newLabel);
+                link.data("action", newAction);
+            }
         });
-        </script>
-        <?php
+    });
+});
+' );
     }
 }
 

@@ -24,27 +24,7 @@ class UltiCommerce_Product_Import {
 
     public function admin_styles( $hook ) {
         if ( $hook !== 'product_page_product-import-csv' ) return;
-        ?>
-        <style>
-        .uti-import-wrap { max-width:720px;margin:20px 0; }
-        .uti-import-wrap h1 { font-size:23px;font-weight:400;margin-bottom:20px; }
-        .uti-import-card { background:#fff;border:1px solid #d9dadc;border-radius:4px;padding:24px;margin-bottom:20px; }
-        .uti-import-card h2 { font-size:16px;margin:0 0 12px;padding:0; }
-        .uti-import-progress { background:#f0f0f0;border-radius:4px;height:24px;margin:12px 0;overflow:hidden; }
-        .uti-import-progress-bar { background:#0052cc;height:100%;transition:width .3s;border-radius:4px; }
-        .uti-import-stats { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0; }
-        .uti-import-stat { background:#f8f9fb;padding:16px;border-radius:4px;text-align:center; }
-        .uti-import-stat .num { font-size:28px;font-weight:700;display:block; }
-        .uti-import-stat .num.success { color:#0f973d; }
-        .uti-import-stat .num.error { color:#dc2626; }
-        .uti-import-stat .num.skipped { color:#f59e0b; }
-        .uti-import-stat .label { font-size:12px;color:#6b7280; }
-        .uti-log-list { background:#f8f9fb;border:1px solid #e5e7eb;border-radius:4px;padding:12px;max-height:300px;overflow-y:auto;font-size:12px;font-family:monospace;margin:12px 0; }
-        .uti-log-list .log-success { color:#0f973d; }
-        .uti-log-list .log-error { color:#dc2626; }
-        .uti-log-list .log-skip { color:#f59e0b; }
-        </style>
-        <?php
+        wp_enqueue_style( 'ulticommerce-admin' );
     }
 
     public function render_page() {

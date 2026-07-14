@@ -135,30 +135,31 @@ class UltiCommerce_Order_Statuses {
         </button>
         <span class="spinner" style="float:none;margin-top:8px;"></span>
         <p style="color:#999;font-size:11px;margin:4px 0 0;"><?php esc_html_e( 'Only allowed transitions are shown as active.', 'ulticommerce-core' ); ?></p>
-        <script>
-        jQuery(function($) {
-            $('#ulti-order-status-update').on('click', function() {
-                var btn = $(this);
-                var status = $('#ulti-order-status-select').val();
-                var postId = btn.data('post-id');
-                var spinner = btn.siblings('.spinner');
-                spinner.addClass('is-active');
-                $.post(ajaxurl, {
-                    action: 'ulti_update_order_status',
-                    post_id: postId,
-                    status: status,
-                    _ajax_nonce: '<?php echo wp_create_nonce( 'ulti_update_status_' . $post->ID ); ?>'
-                }, function(resp) {
-                    spinner.removeClass('is-active');
-                    if (resp.success) {
-                        location.reload();
-                    } else {
-                        alert(resp.data && resp.data.message ? resp.data.message : '<?php echo esc_js( __( 'Error updating status.', 'ulticommerce-core' ) ); ?>');
-                    }
-                });
-            });
+        <?php wp_enqueue_script( 'ulticommerce-admin' ); ?>
+        <?php wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    $("#ulti-order-status-update").on("click", function() {
+        var btn = $(this);
+        var status = $("#ulti-order-status-select").val();
+        var postId = btn.data("post-id");
+        var spinner = btn.siblings(".spinner");
+        spinner.addClass("is-active");
+        $.post(ajaxurl, {
+            action: "ulti_update_order_status",
+            post_id: postId,
+            status: status,
+            _ajax_nonce: "' . wp_create_nonce( 'ulti_update_status_' . $post->ID ) . '"
+        }, function(resp) {
+            spinner.removeClass("is-active");
+            if (resp.success) {
+                location.reload();
+            } else {
+                alert(resp.data && resp.data.message ? resp.data.message : "' . esc_js( __( 'Error updating status.', 'ulticommerce-core' ) ) . '");
+            }
         });
-        </script>
+    });
+});
+' ); ?>
         <?php endif; ?>
         <?php
     }

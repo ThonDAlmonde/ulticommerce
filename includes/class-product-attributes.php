@@ -46,41 +46,42 @@ class UltiCommerce_Product_Attributes {
             </div>
             <button type="button" class="button" id="add-attribute-row"><?php esc_html_e( 'Add Attribute', 'ulticommerce-core' ); ?></button>
         </div>
-        <script>
-        jQuery(function($) {
-            var attrIndex = 0;
-            var availableAttrs = <?php echo json_encode( wp_list_pluck( $attributes, 'slug', 'term_id' ) ); ?>;
-            var $container = $('#product-attribute-rows');
-
-            $('#add-attribute-row').on('click', function() {
-                attrIndex++;
-                $.get(ajaxurl, { action: 'ulti_get_attribute_row', index: attrIndex }, function(html) {
-                    $container.append(html);
-                });
-            });
-
-            $container.on('click', '.remove-attr-row', function(e) {
-                e.preventDefault();
-                $(this).closest('.attr-row').remove();
-            });
-
-            $container.on('change', '.attr-name-select', function() {
-                var $row = $(this).closest('.attr-row');
-                var $values = $row.find('.attr-values');
-                var slug = $(this).val();
-                if (slug && availableAttrs[slug]) {
-                    $.get(ajaxurl, { action: 'ulti_get_attr_terms', attr_slug: slug }, function(data) {
-                        if (data) {
-                            $values.replaceWith(
-                                '<input type="text" class="attr-values" name="product_attributes[' + $row.data('index') + '][values]" value="' + data.join(', ') + '" placeholder="<?php esc_attr_e( 'Comma-separated values', 'ulticommerce-core' ); ?>">'
-                            );
-                        }
-                    }, 'json');
-                }
-            });
-        });
-        </script>
         <?php
+        wp_enqueue_script( 'ulticommerce-admin' );
+        wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    var attrIndex = 0;
+    var availableAttrs = ' . json_encode( wp_list_pluck( $attributes, 'slug', 'term_id' ) ) . ';
+    var $container = $("#product-attribute-rows");
+
+    $("#add-attribute-row").on("click", function() {
+        attrIndex++;
+        $.get(ajaxurl, { action: "ulti_get_attribute_row", index: attrIndex }, function(html) {
+            $container.append(html);
+        });
+    });
+
+    $container.on("click", ".remove-attr-row", function(e) {
+        e.preventDefault();
+        $(this).closest(".attr-row").remove();
+    });
+
+    $container.on("change", ".attr-name-select", function() {
+        var $row = $(this).closest(".attr-row");
+        var $values = $row.find(".attr-values");
+        var slug = $(this).val();
+        if (slug && availableAttrs[slug]) {
+            $.get(ajaxurl, { action: "ulti_get_attr_terms", attr_slug: slug }, function(data) {
+                if (data) {
+                    $values.replaceWith(
+                        "<input type=\"text\" class=\"attr-values\" name=\"product_attributes[" + $row.data("index") + "][values]\" value=\"" + data.join(", ") + "\" placeholder=\"' . esc_attr__( 'Comma-separated values', 'ulticommerce-core' ) . '\">"
+                    );
+                }
+            }, "json");
+        }
+    });
+});
+' );
     }
 
     public function edit_attribute_fields( $post ) {
@@ -99,25 +100,26 @@ class UltiCommerce_Product_Attributes {
                 </td>
             </tr>
         </table>
-        <script>
-        jQuery(function($) {
-            var attrIndex = <?php echo count( $product_attrs ); ?>;
-            var $container = $('#product-attribute-rows');
-
-            $('#add-attribute-row').on('click', function() {
-                attrIndex++;
-                $.get(ajaxurl, { action: 'ulti_get_attribute_row', index: attrIndex }, function(html) {
-                    $container.append(html);
-                });
-            });
-
-            $container.on('click', '.remove-attr-row', function(e) {
-                e.preventDefault();
-                $(this).closest('.attr-row').remove();
-            });
-        });
-        </script>
         <?php
+        wp_enqueue_script( 'ulticommerce-admin' );
+        wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    var attrIndex = ' . count( $product_attrs ) . ';
+    var $container = $("#product-attribute-rows");
+
+    $("#add-attribute-row").on("click", function() {
+        attrIndex++;
+        $.get(ajaxurl, { action: "ulti_get_attribute_row", index: attrIndex }, function(html) {
+            $container.append(html);
+        });
+    });
+
+    $container.on("click", ".remove-attr-row", function(e) {
+        e.preventDefault();
+        $(this).closest(".attr-row").remove();
+    });
+});
+' );
     }
 
     private function render_attribute_rows( $post_id, $product_attrs ) {

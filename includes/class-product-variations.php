@@ -86,85 +86,87 @@ class UltiCommerce_Product_Variations {
             <?php endif; ?>
         </div>
 
-        <script>
-        jQuery(function($) {
-            var attrs = <?php echo json_encode( $attrs ); ?>;
-            var basePrice = '<?php echo esc_js( $base_price ); ?>';
-            var baseSku = '<?php echo esc_js( $base_sku ); ?>';
+        <?php
+        wp_enqueue_script( 'ulticommerce-admin' );
+        wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    var attrs = ' . json_encode( $attrs ) . ';
+    var basePrice = "' . esc_js( $base_price ) . '";
+    var baseSku = "' . esc_js( $base_sku ) . '";
 
-            function cartesianProduct(arrays) {
-                return arrays.reduce(function(a, b) {
-                    return a.flatMap(function(d) { return b.map(function(e) { return [].concat(d, e); }); });
-                }, [[]]);
-            }
+    function cartesianProduct(arrays) {
+        return arrays.reduce(function(a, b) {
+            return a.flatMap(function(d) { return b.map(function(e) { return [].concat(d, e); }); });
+        }, [[]]);
+    }
 
-            $('#generate-variations').on('click', function() {
-                var attrNames = Object.keys(attrs);
-                var attrValues = attrNames.map(function(n) { return attrs[n].values || []; });
-                var combinations = cartesianProduct(attrValues);
+    $("#generate-variations").on("click", function() {
+        var attrNames = Object.keys(attrs);
+        var attrValues = attrNames.map(function(n) { return attrs[n].values || []; });
+        var combinations = cartesianProduct(attrValues);
 
-                var $tbody = $('#variations-table tbody');
-                $tbody.empty();
+        var $tbody = $("#variations-table tbody");
+        $tbody.empty();
 
-                combinations.forEach(function(combo) {
-                    var $row = $('<tr>');
-                    $row.append('<td><input type="text" class="var-sku" value="' + baseSku + '-' + combo.join('-') + '"></td>');
-                    attrNames.forEach(function(name, i) {
-                        var $select = $('<select class="var-attr" data-attr="' + name + '"><option value="">—</option></select>');
-                        (attrs[name].values || []).forEach(function(v) {
-                            $select.append('<option value="' + v + '"' + (v === combo[i] ? ' selected' : '') + '>' + v + '</option>');
-                        });
-                        $row.append($('<td>').append($select));
-                    });
-                    $row.append('<td><input type="number" step="0.01" class="var-price" value="' + basePrice + '"></td>');
-                    $row.append('<td><input type="number" class="var-qty" value="0"></td>');
-                    $row.append('<td><a href="#" class="remove-variation">Remove</a></td>');
-                    $tbody.append($row);
+        combinations.forEach(function(combo) {
+            var $row = $("<tr>");
+            $row.append("<td><input type=\"text\" class=\"var-sku\" value=\"" + baseSku + "-" + combo.join("-") + "\"></td>");
+            attrNames.forEach(function(name, i) {
+                var $select = $("<select class=\"var-attr\" data-attr=\"" + name + "\"><option value=\"\">—</option></select>");
+                (attrs[name].values || []).forEach(function(v) {
+                    $select.append("<option value=\"" + v + "\"" + (v === combo[i] ? " selected" : "") + ">" + v + "</option>");
                 });
+                $row.append($("<td>").append($select));
             });
+            $row.append("<td><input type=\"number\" step=\"0.01\" class=\"var-price\" value=\"" + basePrice + "\"></td>");
+            $row.append("<td><input type=\"number\" class=\"var-qty\" value=\"0\"></td>");
+            $row.append("<td><a href=\"#\" class=\"remove-variation\">Remove</a></td>");
+            $tbody.append($row);
+        });
+    });
 
-            $(document).on('click', '.remove-variation', function(e) {
-                e.preventDefault();
-                $(this).closest('tr').remove();
+    $(document).on("click", ".remove-variation", function(e) {
+        e.preventDefault();
+        $(this).closest("tr").remove();
+    });
+
+    $("#save-variations").on("click", function() {
+        var $spinner = $(this).siblings(".spinner");
+        $spinner.addClass("is-active");
+
+        var variations = [];
+        $("#variations-table tbody tr").each(function() {
+            var $row = $(this);
+            if ($row.hasClass("no-variations")) return;
+            var attrs_data = {};
+            $row.find(".var-attr").each(function() {
+                attrs_data[$(this).data("attr")] = $(this).val();
             });
-
-            $('#save-variations').on('click', function() {
-                var $spinner = $(this).siblings('.spinner');
-                $spinner.addClass('is-active');
-
-                var variations = [];
-                $('#variations-table tbody tr').each(function() {
-                    var $row = $(this);
-                    if ($row.hasClass('no-variations')) return;
-                    var attrs_data = {};
-                    $row.find('.var-attr').each(function() {
-                        attrs_data[$(this).data('attr')] = $(this).val();
-                    });
-                    variations.push({
-                        id: $row.data('variation-id') || 0,
-                        sku: $row.find('.var-sku').val(),
-                        attributes: attrs_data,
-                        price: $row.find('.var-price').val(),
-                        quantity: $row.find('.var-qty').val(),
-                    });
-                });
-
-                $.post(ajaxurl, {
-                    action: 'ulti_save_variations',
-                    post_id: <?php echo intval( $post->ID ); ?>,
-                    variations: variations,
-                    _ajax_nonce: '<?php echo wp_create_nonce( 'ulti_save_variations' ); ?>'
-                }, function(resp) {
-                    $spinner.removeClass('is-active');
-                    if (resp.success) {
-                        alert('<?php echo esc_js( __( 'Variations saved!', 'ulticommerce-core' ) ); ?>');
-                    } else {
-                        alert('<?php echo esc_js( __( 'Error saving variations.', 'ulticommerce-core' ) ); ?>');
-                    }
-                });
+            variations.push({
+                id: $row.data("variation-id") || 0,
+                sku: $row.find(".var-sku").val(),
+                attributes: attrs_data,
+                price: $row.find(".var-price").val(),
+                quantity: $row.find(".var-qty").val(),
             });
         });
-        </script>
+
+        $.post(ajaxurl, {
+            action: "ulti_save_variations",
+            post_id: ' . intval( $post->ID ) . ',
+            variations: variations,
+            _ajax_nonce: "' . wp_create_nonce( 'ulti_save_variations' ) . '"
+        }, function(resp) {
+            $spinner.removeClass("is-active");
+            if (resp.success) {
+                alert("' . esc_js( __( 'Variations saved!', 'ulticommerce-core' ) ) . '");
+            } else {
+                alert("' . esc_js( __( 'Error saving variations.', 'ulticommerce-core' ) ) . '");
+            }
+        });
+    });
+});
+' ); ?>
         <?php
     }
 

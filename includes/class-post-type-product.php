@@ -111,32 +111,33 @@ class UltiCommerce_Product_CPT {
             </ul>
             <button type="button" class="button" id="add-gallery-images"><?php esc_html_e( 'Add Gallery Images', 'ulticommerce-core' ); ?></button>
         </div>
-        <script>
-        jQuery(function($) {
-            var frame;
-            $('#add-gallery-images').on('click', function(e) {
-                e.preventDefault();
-                if (frame) { frame.open(); return; }
-                frame = wp.media({ title: '<?php echo esc_js( __( 'Select Gallery Images', 'ulticommerce-core' ) ); ?>', multiple: true, library: { type: 'image' } });
-                frame.on('select', function() {
-                    var ids = frame.state().get('selection').map(function(a) { return a.id; });
-                    ids.forEach(function(id) {
-                        $.post(ajaxurl, { action: 'ulti_get_attachment_thumb', attachment_id: id }, function(html) {
-                            $('#product-gallery-list').append(
-                                '<li data-id="' + id + '">' + html + '<input type="hidden" name="_product_gallery[]" value="' + id + '"><a href="#" class="remove-gallery-item">&times;</a></li>'
-                            );
-                        });
-                    });
+        <?php
+        wp_enqueue_script( 'ulticommerce-admin' );
+        wp_add_inline_script( 'ulticommerce-admin', '
+jQuery(function($) {
+    var frame;
+    $("#add-gallery-images").on("click", function(e) {
+        e.preventDefault();
+        if (frame) { frame.open(); return; }
+        frame = wp.media({ title: "' . esc_js( __( 'Select Gallery Images', 'ulticommerce-core' ) ) . '", multiple: true, library: { type: "image" } });
+        frame.on("select", function() {
+            var ids = frame.state().get("selection").map(function(a) { return a.id; });
+            ids.forEach(function(id) {
+                $.post(ajaxurl, { action: "ulti_get_attachment_thumb", attachment_id: id }, function(html) {
+                    $("#product-gallery-list").append(
+                        "<li data-id=\"" + id + "\">" + html + "<input type=\"hidden\" name=\"_product_gallery[]\" value=\"" + id + "\"><a href=\"#\" class=\"remove-gallery-item\">&times;</a></li>"
+                    );
                 });
-                frame.open();
-            });
-            $('#product-gallery-list').on('click', '.remove-gallery-item', function(e) {
-                e.preventDefault();
-                $(this).closest('li').remove();
             });
         });
-        </script>
-        <?php
+        frame.open();
+    });
+    $("#product-gallery-list").on("click", ".remove-gallery-item", function(e) {
+        e.preventDefault();
+        $(this).closest("li").remove();
+    });
+});
+' );
     }
 
     public function render_enable_meta_box( $post ) {
