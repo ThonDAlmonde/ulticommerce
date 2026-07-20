@@ -1,13 +1,13 @@
 <?php
 /**
- * Plugin Name: UltiCommerce Core
- * Plugin URI:  https://github.com/ThonDAlmonde/ulticommerce-core
+ * Plugin Name: UltiCommerce
+ * Plugin URI:  https://github.com/ThonDAlmonde/ulticommerce
  * Description: Core e-commerce plugin for UltiCommerce. Products, orders, cart, checkout, shipping, and coupons.
  * Version:     1.1.0
  * Author:      UltiCommerce
  * License:     GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: ulticommerce-core
+ * Text Domain: ulticommerce
  * Domain Path: /languages
  */
 
@@ -41,7 +41,7 @@ function ulti_commerce_init() {
     if ( ! class_exists( 'UltiCommerceLogin' ) ) {
         add_action( 'admin_notices', function () {
             echo '<div class="notice notice-warning"><p>'
-                . esc_html__( 'UltiCommerce requires UltiCommerceLogin plugin to be installed and activated.', 'ulticommerce-core' )
+                . esc_html__( 'UltiCommerce requires UltiCommerceLogin plugin to be installed and activated.', 'ulticommerce' )
                 . '</p></div>';
         } );
     }
@@ -63,8 +63,8 @@ add_action( 'init', 'ulti_register_variation_post_type' );
 function ulti_register_variation_post_type() {
     register_post_type( 'product_variation', [
         'labels'              => [
-            'name'          => __( 'Variations', 'ulticommerce-core' ),
-            'singular_name' => __( 'Variation', 'ulticommerce-core' ),
+            'name'          => __( 'Variations', 'ulticommerce' ),
+            'singular_name' => __( 'Variation', 'ulticommerce' ),
         ],
         'public'              => false,
         'publicly_queryable'  => false,
